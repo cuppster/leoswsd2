@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Leonardo - Examples</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- styles -->
+    <link href="../lib/bootstrap-2.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../lib/bootstrap-2.0/css/bootstrap-responsive.min.css" rel="stylesheet">
+    <link href="./switch.css" rel="stylesheet">    
+    <link href="../lib/pnotify/jquery.pnotify.default.css" media="all" rel="stylesheet" type="text/css" />
+    <link href="../lib/pnotify/jquery.pnotify.default.icons.css" media="all" rel="stylesheet" type="text/css" />
+    <link href="../lib/grumble/css/grumble.css" media="all" rel="stylesheet" type="text/css" />
+    <link href="./style.css" rel="stylesheet">
+    
+    <style>
+      
+      ul.taste-pills {
+        margin-top: 1em;
+        list-style-type: none;
+      }
+      
+      div.art-thumb {
+        width: 150px;
+        height: 150px;
+        overflow: hidden;
+        float: left;
+        margin-right: 1em;
+        margin-bottom: 1em;
+      }
+      
+   
+
+      /* LINKS
+      ----------------------------------------------------------------*/
+      
+      span.label a {
+        color: white;
+      }
+  
+      
+    </style>
+    
+    <script id="ithumb-like" type="text/template">
+      <span class="thumbs4 up"></span>
+    </script>
+    
+    <script id="ithumb-unlike" type="text/template">
+      <span style="color: #999">Unlike</span>
+    </script>
+    
+    <script id="new-recommendations-content" type="text/template">
+      There are <a href='#new'>new recommendations</a> to see!
+    </script>
+    
+    <script id="ithumb-image-template" type="text/template">    
+      <div class="ithumb {{#isNewRecommendation}}new{{/isNewRecommendation}}">
+        <div class="over">
+          <div class="info">  
+            <ul class="flags">
+              {{#isLiked}}
+                <li><span class='star2 active'></span></li>
+              {{/isLiked}}
+              
+              {{#flags.artist.active}}
+                <!--<li><button title="An artist you like" class='user3 active' src='./images/trans16.png'/></li>-->
+                <li title="You like this artist" data-tooltip-direction="top" data-tooltip-color="white" data-tooltip-margin="5"><span class='user3 active'></span></li>
+              {{/flags.artist.active}}                  
+              
+              {{#flags.similar.active}}
+                <li title="You like something similar"><span class='swatch3 active'></span></li>
+              {{/flags.similar.active}}
+              
+              {{#flags.tags}}                    
+                <li title="You like a tag"><span class='tag3 active'></span></li>                
+              {{/flags.tags}}
+              
+              {{#flags.popular}}
+                <li title="Popular artwork" <span class='swatch3 active'></span></li> 
+              {{/flags.popular}}
+              
+              {{#flags.random}}
+                <li title="Random selection ;)" ><span class='swatch3 active'></span></li> 
+              {{/flags.random}}  
+              
+              <li style="float:right;padding-right: 7px;">
+                
+                {{#forceDislike}}
+                  <a data-action='dislike' data-tag='{{tag}}' data-lid='{{lid}}' href='{{href}}'>dislike</a>  
+                {{/forceDislike}}
+                
+                <!--
+                {{#dislike}}
+                  <a data-action='{{verb}}' data-tag='{{tag}}' data-lid='{{lid}}' href='{{href}}'><span class="thumbs4 down"></span></a>              
+                {{/dislike}}
+                
+               
+                {{#like}} 
+                  <a data-action='{{verb}}' data-tag='{{tag}}' data-lid='{{lid}}' href='{{href}}'><span class="thumbs4 up"></span></a>              
+                {{/like}}    
+                -->
+              
+              </li> 
+            </ul>
+                        
+            <div class="title">
+              {{title}}
+            </div>   
+            <div class="artist">
+              <a href='#artist/{{aid}}'>{{artist}}</a>
+            </div>
+          </div>
+        </div>
+        <div class="inner">
+          {{#isNewRecommendation}}
+                <span rel="new-recom" class='tp vis-state new'></span>
+          {{/isNewRecommendation}}
+          <div class="feedback">
+            
+            {{#like}}
+              <a class='btn' data-action='{{verb}}' data-tag='{{tag}}' data-lid='{{lid}}' href='{{href}}'><span class="thumbs4 up"></span></a>              
+            {{/like}}      
+            
+            {{#dislike}}
+              <a class='btn' data-action='{{verb}}' data-tag='{{tag}}' data-lid='{{lid}}' href='{{href}}'>Unlike</a>              
+            {{/dislike}}
+            
+          </div>
+          <div>
+            {{#thumb}}
+              <a rel='{{rel}}' data-model-id="{{id}}" href='#art/{{id}}'>
+                <img class="art" src="{{thumb}}"/>
+              </a>
+            {{/thumb}}
+            {{^thumb}}
+              <a rel='{{rel}}' data-model-id="{{id}}" href='#art/{{id}}'>
+                <img class="art" src="{{full}}"/>
+              </a>
+            {{/thumb}}
+          </div>
+        </div>  
+      </div>
+      
+    </script>
+
+    <script id="ithumb-only-template" type="text/template">
+      {{#art}}
+        {{> thumb}}
+      {{/art}}
+    </script>
+    
+    <script id="ithumb-template" type="text/template">     
+      <div class="thumbs-wrap">       
+        {{#art}}
+          {{> thumb}}
+        {{/art}}
+      </div>
+    </script>
+    
+    <script id="art-template" type="text/template">
+      <div class='span12'>
+      
+      <!--
+      {{#title}}
+        <div class="subnav">
+          <h4>{{title}}</h4>
+          {{#action}}
+            <button class='{{class}}'><a data-action='{{verb}}' data-tag='{{tag}}' data-lid='{{lid}}' href='{{href}}'>{{text}}</a></button>
+          {{/action}}
+        </div>
+      {{/title}}-->
+      
+        {{#full}}
+        <img class="hide" data-rel="stream-image" src="{{full}}"/>
+        {{/full}}
+        {{^full}}
+        <img class="hide" data-rel="stream-image" src="{{thumb}}"/>
+        {{/full}}
+        &nbsp;
+      </div>
+    </script>
+    
+     <script id="art-info-template" type="text/template">
+        
+      <div>
+        <div id='info-thumb'></div>
+          
+        <h3><a href='#art/{{id}}'>{{title}}</a></h3>
+        <p>by <a href='#artist/{{aid}}'>{{artist}}</a></p>
+      
+        <!--
+        
+        NOTE: this is done in the top nav bar
+        
+        {{#like}}             
+          <a class='btn' data-action='{{verb}}' data-tag='{{tag}}' data-lid='{{lid}}' href='{{href}}'>{{text}}</a></button>
+        {{/like}}
+        -->  
+        <ul class='flags tp'>  
+        
+          <li>
+            
+            {{#likeartist}}
+              <a href='#' class='active' rel='artist-taste' data-artist='{{aid}}' data-tasteid='{{likeartist}}'>
+              <span class='user3'/></a>
+            {{/likeartist}}
+            {{^likeartist}}
+              <a href='#' class='inactive' rel='artist-taste' data-artist='{{aid}}' data-tasteid='{{likeartist}}'>
+              <span class='user3'/></a>
+            {{/likeartist}}
+            <a href='#artist/{{aid}}'>{{artist}}</a>
+          </li>
+          
+          {{#liketags}}
+            <li><a href='#' class='active' rel='tag-taste' data-tag='{{tag}}' data-tasteid='{{taste_id}}' data-tagtext='{{tagtext}}'><span class='tag3'/></a> 
+            <a rel='search' href='#tag/{{tag}}'>{{tagtext}}</a></li>
+          {{/liketags}}
+          
+          {{#tags}}
+            <li><a href='#' class='inactive' rel='tag-taste' data-tag='{{tag}}' data-tasteid='{{taste_id}}' data-tagtext='{{tagtext}}'><span class='tag3'/></a> 
+            <a rel='search' href='#tag/{{tag}}'>{{tagtext}}</a></li>
+          {{/tags}}
+          
+
+          
+          <li>
+            {{#likeart}}
+              <span class='swatch3 active'/>
+            {{/likeart}}
+            {{^likeart}}
+              <span class='swatch3 inactive'/>
+            {{/likeart}}
+            <a href='#similar/{{id}}'>Similar</a>
+          </li>
+          
+          {{#likepop}}
+            <li><span class='swatch3 active'/> Popular</li>
+          {{/likepop}}
+          
+          <!--
+          {{#likerandom}}
+            <li><span class='swatch3 active'/> Random</li>
+          {{/likerandom}}
+          -->
+          
+        </ul>
+        
+        <!-- FIXME: removed for the visual-search use-case 
+        <a class='leo-addcart btn' href='#'>Add to Cart</a>
+        -->
+            
+      </div>      
+    </script>
+  
+    <script id="taste-thumbs-template" type="text/template">
+      <div class="thumbs-wrap">
+        {{#label}}
+          <h2>{{label}}</h2>
+        {{/label}}
+        {{#header}}
+          <h2>
+          {{#thumb}}
+            <img class='taste-thumb' src='{{thumb}}'/>
+          {{/thumb}}{{desc}}</h2>
+        {{/header}}
+        {{#art}}
+          <div class="stream-thumb">
+            <div class="inner">
+              <div>
+                {{#thumb}}
+                  <a href='#art/{{id}}'>
+                    <img data-model-id="{{id}}" src="{{thumb}}"/>
+                  </a>
+                {{/thumb}}
+                {{^thumb}}
+                  <a href='#art/{{id}}'>
+                    <img data-model-id="{{id}}" src="{{full}}"/>
+                  </a>
+                {{/thumb}}
+              </div>
+            </div>          
+            <div class="title">
+              {{title}}
+            </div>          
+          </div>
+        {{/art}}
+      </div>
+    </script>
+    
+    <script id="thumbs-template" type="text/template">
+      {{#label}}
+        <h2>{{label}}</h2>
+      {{/label}}
+      {{#header}}
+        <h2>{{desc}}
+        {{#thumb}}
+          <img class='taste-thumb' src='{{thumb}}'/>
+        {{/thumb}}</h2>
+      {{/header}}
+      {{#art}}
+        <div class="stream-thumb">
+          <div class="inner">
+            <div>
+              {{#thumb}}
+                <a href='#art/{{id}}'>
+                  <img data-model-id="{{id}}" src="{{thumb}}"/>
+                </a>
+              {{/thumb}}
+              {{^thumb}}
+                <a href='#art/{{id}}'>
+                  <img data-model-id="{{id}}" src="{{full}}"/>
+                </a>
+              {{/thumb}}
+            </div>
+          </div>          
+          <div class="title">
+            {{title}}
+          </div>          
+        </div>
+      {{/art}}
+    </script>
+    
+    <script id="headerlink-template" type="text/template">
+      <a class='btn-sq' href='{{link}}'><span id="navbar-title-icon" class='ga {{ga}}'></span><span>{{title}}</span></a>
+    </script>
+    
+    
+  </head>
+
+  <body>
+    
+    <div class="navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          
+           <a class="brand" href="#" ><img class='logo' src='images/logo.png'/> Leonardo</a>         
+          
+          
+          <!--
+          <ul class="nav">
+           <li>
+              <a href='#home' id="home-link" rel="notification-target" data-title="There are new recommendations..." data-content="" data-placement="bottom" >Home</a>
+            </li>
+          </ul>
+          -->
+          <ul id="headertitle" class="nav">
+            <li id='headerlink' class='tp' data-template='#headerlink-template'>
+              <!--<a id="navbar-title-link" href='#'><span id="navbar-title-icon" class='ga'></span><span id="navbar-title"></span></a>-->
+            </li>
+          </ul>
+          
+          <!-- controls -->
+          <ul id="controls" class="nav">   
+            <li data-rel='stream-prev'>
+              <a class='image-only' data-command="prevArt" href='#'><span class='media5 rw'></span></a>
+            </li>      
+            <!--                     
+            <li data-rel='stream-play'>
+              <a class='image-only' data-command="playArt" href='#'><span class='media5 play'></span></a>
+            </li>
+            -->       
+            <li data-rel='stream-next'>
+              <a class='image-only' data-command="nextArt" href='#'><span class='media5 ffw'></span></a>
+            </li>
+            
+            <li data-rel='feedback'>
+              <a class='image-only' rel='like' data-command="likeArt" href='#'><span data-class-sticky='model.thumbUp' class='bigthumbs4 up'></span></a>
+            </li>
+            <li data-rel='feedback'>
+              <a class='image-only' rel='dislike' data-command="dislikeArt" href='#'><span data-class-sticky='model.thumbDown' class='bigthumbs4 down'></span></a>
+            </li>   
+            
+          </ul>
+                  
+          <ul id="site-nav" class="nav pull-right">
+           <!--
+            <li>
+              <a href='#home' id="home-link" rel="notification-target" data-title="There are new recommendations..." data-content="" data-placement="bottom" >Home</a>
+            </li>
+            -->
+            <li>
+              <a data-hide='model.hasNew' href='#'>Home</a>
+            </li>
+            <li>
+              <a data-show='model.hasNew' style='display:none' class="tp" rel="new" href='#new'>New Recommendations are Ready</a>
+            </li>
+            <li style='display:none'>
+              <a href='#single' id="art-link">Art</a>
+            </li>
+            <li style='display:none'>
+              <a href='#gallery' id="gallery-link">Art</a>
+            </li>
+            <li style='display:none'>
+              <a href='#search' id="search-link">Search</a>
+            </li>
+            <li style='display:none'>
+              <a href='#interest' id="interest-link">Interest</a>
+            </li>
+            <!--
+            no stream for this demo
+            <li>
+              <a href='#suggest' id="suggest-link">Stream</a>
+            </li>
+            -->
+            <!--
+            <li>
+              <a href='#cart' id="cart-link">Cart</a>
+            </li>
+            -->
+            <!--
+            <li class="divider-vertical"></li>            
+            -->
+            <!-- search form 
+            
+            <li>
+              <form class="navbar-search pull-right" data-role='search'>            
+                <input type="search" data-role='keyword' class="search-query" placeholder="search">           
+              </form>  
+            </li>
+                     --> 
+            <li class="divider-vertical"></li>
+          
+            <li class="dropdown">              
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                <i class="icon-user icon-white"></i>
+                <span id="user-name"></span><b class="caret"></b>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a id="clear-tastes" href="#">Clear Profile</a></li>  
+                <!--<li><a id="clear-cart" href="#">Clear Cart</a></li>-->
+                <li><a id="sign-out" href="#">Sign out</a></li>              
+              </ul>
+            </li>
+          </ul>   
+        </div>
+      </div>
+    </div>
+    
+    <!--
+    <div id="subnav" class="subnav subnav-fixed">
+      <p id="subnav-title"></p>
+    </div>
+    -->
+    
+    <div class="container">      
+
+      <div class="tab-content">
+  
+        <div id="interest" class="tab-pane active">
+          <div class="row">        
+            <div class="span12"> 
+                <div data-role="items" data-template="#ithumb-template"></div>
+            </div>
+          </div><!--/row-->
+          
+          <div style="clear:both;padding-bottom:24px;visibility:hidden" class="bottom">          
+            <a href='#'>Next</a>
+          </div>          
+        </div><!--/tab-->
+        
+        <!-- stream view / to be reused for many types of streams: suggest, tag, artist, etc... -->
+        <div id="gallery" class="tab-pane">
+          <div class="row">
+            <div>
+              <div class="art-info tp" data-rel="art-info" data-template="#art-info-template"></div>
+            </div>
+            <div class="span12">
+              <div data-rel="art" data-template="#art-template"></div>        
+            </div>
+          </div><!--/row-->
+        </div><!--/tab-->
+        
+        <div id="home" class="tab-pane">
+          <div class="row">        
+            <div class="span12">                    
+                <div data-role="items" data-template="#taste-thumbs-template"></div>              
+                <div data-role="recommendations" data-template="#taste-thumbs-template"></div>
+                <div data-role="other" data-template="#taste-thumbs-template"></div>
+            </div>
+          </div><!--/row-->
+        </div><!--/tab-->
+        
+        <div id="suggest" class="tab-pane">          
+          <div class="row">
+            <div>
+              <div class="art-info" data-rel="art-info" data-template="#art-info-template"></div>
+            </div>
+            <div class="span12">
+              <div data-rel="art" data-template="#art-template"></div>        
+            </div>
+          </div><!--/row-->
+        </div><!--/tab-->
+
+        <div id="single" class="tab-pane">                    
+          <div class="row">
+            <div>
+              <div class="art-info" data-rel="art-info" data-template="#art-info-template"></div>
+            </div>
+            <div class="span12">
+              <div data-rel="art" data-template="#art-template"></div>        
+            </div>
+          </div><!--/row-->
+        </div><!--/tab-->
+                
+        <div id="cart" class="tab-pane">
+          <div class="row">        
+            <div class="span12">              
+              <h2>Your Cart</h2>          
+              <div class="thumbs-wrap">
+                <div data-role="items" data-template="#thumbs-template"></div>
+              </div>              
+              <h2 style="clear:both">You might also like...</h2>          
+              <div class="thumbs-wrap">
+                <div data-role="recommendations" data-template="#thumbs-template"></div>
+              </div>              
+            </div>
+          </div><!--/row-->
+        </div><!--/tab-->
+
+        <div id="search" class="tab-pane">
+          <div class="row">        
+            <div class="span12">       
+              <div class="thumbs-wrap">
+                <div data-role="items" data-template="#ithumb-template"></div>
+              </div>     
+            </div>
+          </div><!--/row-->
+          <div style="clear:both;padding-bottom:24px;visibility:hidden" class="bottom">          
+            <a href='#'>Next</a>
+          </div>
+        </div><!--/tab-->
+                
+      </div><!--/tab-content-->              
+    </div> <!--/container -->
+    
+    <div class="modal hide" id="login-modal">      
+      <div class="modal-body">
+        <form class='form-horizontal'>
+          <label>Username</label>
+          <input type='text' class='span3' name='username' placeholder='username' value=''/>
+          <button id='sign-in-button' type="submit" class='btn btn-primary'>Sign in</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+      </div>
+    </div>
+ 
+    <div class="modal hide" id="clear-modal">      
+      <div class="modal-body">
+        <h3>Delete Your Profile?</h3>
+        <br/>
+        <button id='clear-all' class='btn btn-danger'>Delete All</button>
+        <button class='btn btn-primary' data-dismiss="modal">Cancel</button>
+      </div>     
+    </div>
+    
+    <!-- supporting libs -->
+    <script src="../lib/jquery-1.7.1.min.js" type="application/javascript"></script>
+    <script src="./fullscreen.js" type="application/javascript"></script>
+    <script src="../lib/jquery.base64.min.js"></script>
+    <script src="../lib/waypoints.min.js"></script>
+    <script src="../lib/jecookie.js"></script> 
+    <script src="../lib/underscore-1.3.3-min.js" type="application/javascript"></script>
+    <script src="../lib/backbone-0.9.2.js" type="application/javascript"></script>
+    <script src="../lib/bootstrap-2.0/js/bootstrap-modal.js" type="application/javascript"></script>  
+    <script src="../lib/bootstrap-2.0/js/bootstrap-dropdown.js" type="application/javascript"></script>  
+    <script src="../lib/bootstrap-2.0/js/bootstrap-tab.js" type="application/javascript"></script> 
+    
+    <script src="../lib/rivets.js" type="application/javascript"></script>
+    <script src="../lib/grumble/js/Bubble.js" type="application/javascript"></script>
+    <script src="../lib/grumble/js/jquery.grumble.js" type="application/javascript"></script>
+    <!-- 
+    <script src="../lib/bootstrap-2.0/js/bootstrap-tooltip.js" type="application/javascript"></script>  
+    <script src="../lib/bootstrap-2.0/js/bootstrap-popover.js" type="application/javascript"></script>  
+    -->
+    
+    <!--<script  src="../lib/pnotify/jquery.pnotify.min.js" type="text/javascript"></script>    -->
+    <script src="./switch.js" type="application/javascript"></script>  
+    <script src="../lib/leonardo.js" type="application/javascript"></script>
+    <script src="../lib/mustache.js"></script>
+   
+    <script src="./main.js" type="application/javascript"></script>
+    
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-34260005-1']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+  </body>
+</html>
